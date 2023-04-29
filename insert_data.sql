@@ -1,5 +1,9 @@
 USE car_rental;
 
+-- set restrictions
+SET SESSION sql_mode = 'STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
+SET GLOBAL sql_mode = 'STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
+
 -- trip status, car status, and payment methods
 INSERT INTO Payment_Methods (name) VALUES ("Cash"), ("Check"), ("Credit Card"), ("Wire Transfer"), ("Paypal"), ("Apple Pay");
 INSERT INTO Trip_Status (name) VALUES ("Processed"), ("Waiting Payment"), ("On-going"), ("Returned");
@@ -68,7 +72,7 @@ INSERT INTO Trips VALUES (DEFAULT, "2023-01-08", "2023-01-09", 2, 84791,4, 3);
 INSERT INTO Trips VALUES (DEFAULT, "2023-02-12", "2023-02-16", 3, 80529,3, 1);
 
 -- view young driver
-CREATE VIEW Yound_Driver AS
+CREATE VIEW Young_Driver AS
 SELECT customer_id, first_name, last_name, (birthdate-CURDATE())<25 AS is_young_driver
 FROM Customers;
 
@@ -78,28 +82,24 @@ SELECT t.trip_id,
 	(t.end_date-t.start_date+1) AS trip_duration,
 	(t.end_date-t.start_date+1)*c.daily_rate AS rental_price, 
 	(t.end_date-t.start_date+1)*21.38 AS insurance, 
-    (t.end_date-t.start_date+1)*10*y.is_young_driver AS younf_driver_fee,
+    (t.end_date-t.start_date+1)*10*y.is_young_driver AS young_driver_fee,
     (t.end_date-t.start_date+1)*c.daily_rate + (t.end_date-t.start_date+1)*21.38+(t.end_date-t.start_date+1)*10*y.is_young_driver AS total_price
 FROM Trips t
 JOIN Cars c USING(car_id)
-JOIN yound_driver y USING (customer_id);
+JOIN young_driver y USING (customer_id);
 
--- drop customer_id, can be found by trip
+-- update a amount for tracking payment
 ALTER TABLE `car_rental`.`Invoice` 
-DROP FOREIGN KEY `fk_Invoice_Customers1`;
-ALTER TABLE `car_rental`.`Invoice` 
-DROP COLUMN `customer_id`,
-DROP INDEX `fk_Invoice_Customers1_idx` ;
-;
+ADD COLUMN `paid_amount` DECIMAL(10,2) NOT NULL DEFAULT 0 AFTER `customer_id`;
 
 -- invoice
-INSERT INTO Invoice VALUES (DEFAULT, "78-145-1093", "2022-12-06", 168, 1);
-INSERT INTO Invoice VALUES (DEFAULT, "78-145-1093", "2022-12-30", 61.28,2);
-INSERT INTO Invoice VALUES (DEFAULT, "77-593-0081", "2022-01-03", 172.17, 3);
-INSERT INTO Invoice VALUES (DEFAULT, "48-266-1517", "2022-12-17", 59.50, 1);
-INSERT INTO Invoice VALUES (DEFAULT, "20-848-0181", "2022-12-12", 126.15, 4);
-INSERT INTO Invoice VALUES (DEFAULT, "41-666-1035", "2023-01-05", 503.04, 5);
-INSERT INTO Invoice VALUES (DEFAULT, "55-105-9605", "2023-01-11", 80.31,6);
+INSERT INTO Invoice VALUES (DEFAULT, "78-145-1093", "2022-12-06", 168, 1, 1,0);
+INSERT INTO Invoice VALUES (DEFAULT, "78-145-1093", "2022-12-30", 61.28,2, 6,0);
+INSERT INTO Invoice VALUES (DEFAULT, "77-593-0081", "2022-01-03", 172.17, 3, 5,0);
+INSERT INTO Invoice VALUES (DEFAULT, "48-266-1517", "2022-12-17", 59.50, 7, 1,0);
+INSERT INTO Invoice VALUES (DEFAULT, "20-848-0181", "2022-12-12", 126.15, 4, 5,0);
+INSERT INTO Invoice VALUES (DEFAULT, "41-666-1035", "2023-01-05", 503.04, 5,4,0);
+INSERT INTO Invoice VALUES (DEFAULT, "55-105-9605", "2023-01-11", 80.31,6,2,0);
 
 -- update payment to allow null
 ALTER TABLE `car_rental`.`Payments` 
@@ -113,12 +113,107 @@ ADD CONSTRAINT `fk_Payments_Invoice1`
 ALTER TABLE `car_rental`.`Payments` 
 CHANGE COLUMN `payment_id` `payment_id` INT NOT NULL AUTO_INCREMENT ;
 
+-- trigger to update paid_amount after payment
+DELIMITER $$
+CREATE TRIGGER paid_amount_after_insert
+	AFTER INSERT ON Payments
+    FOR EACH ROW
+BEGIN
+	UPDATE Invoice
+    SET paid_amount = paid_amount + NEW.amount
+    WHERE invoice_id = NEW.invoice_id;
+END $$
+DELIMITER ;
+
+DELIMITER $$
+CREATE TRIGGER paid_amount_after_delete
+	AFTER DELETE ON Payments
+    FOR EACH ROW
+BEGIN
+	UPDATE Invoice
+    SET paid_amount = paid_amount - OLD.amount
+    WHERE invoice_id = OLD.invoice_id;
+END $$
+DELIMITER ;
+
 -- payment
 INSERT INTO Payments VALUES (DEFAULT, "2022-12-05", 168, 1,1,3);
 INSERT INTO Payments VALUES (DEFAULT, "2022-12-28", 61.28,6,2,4);
-INSERT INTO Payments VALUES (DEFAULT, "2022-01-01", 172.17, 5,3,1);
+INSERT INTO Payments VALUES (DEFAULT, "2022-01-01", 50, 5,3,1);
+INSERT INTO Payments VALUES (DEFAULT, "2022-01-01", 22.17, 5,3,1);
 INSERT INTO Payments VALUES (DEFAULT, "2022-12-15", 59.50, 1,1,3);
-INSERT INTO Payments VALUES (DEFAULT, "2022-12-10", 126.15, 5,4,4);
-INSERT INTO Payments VALUES (DEFAULT, "2023-01-04", 503.04, 4,5,2);
+INSERT INTO Payments VALUES (DEFAULT, "2022-12-10", 100, 5,4,4);
+INSERT INTO Payments VALUES (DEFAULT, "2022-12-10", 26.15, 5,4,4);
+INSERT INTO Payments VALUES (DEFAULT, "2023-01-04", 183.84, 4,5,2);
 INSERT INTO Payments VALUES (DEFAULT, "2023-01-10", 80.31,2,6,1);
 INSERT INTO Payments VALUES (DEFAULT, "2023-01-20", 70.00,5,NULL,1);
+
+-- procedure get customer
+DELIMITER $$
+CREATE PROCEDURE get_customers()
+BEGIN
+	SELECT * FROM Customers;
+END$$
+DELIMITER ;
+
+-- find the best customer 
+CREATE VIEW customer_rank AS 
+SELECT c.customer_id, c.first_name, c.last_name,
+		SUM(amount) AS total_sales
+FROM Customers c
+JOIN Invoice i USING (customer_id)
+GROUP BY customer_id 
+ORDER BY SUM(amount) DESC;
+
+-- veiw trips' payment due
+CREATE VIEW trip_amount_due AS 
+SELECT t.trip_id, i.customer_id, i.invoice_id, t.total_price, i.paid_amount, 
+	t.total_price-i.paid_amount AS amount_due
+FROM Invoice i
+JOIN trip_price t USING (trip_id)
+GROUP BY trip_id
+ORDER BY (t.total_price-i.paid_amount) DESC;
+
+-- getting total income
+DELIMITER $$
+CREATE PROCEDURE get_total_sales()
+BEGIN
+	SELECT SUM(total_price) FROM trip_price;
+END$$
+DELIMITER ;
+
+-- get most popluar car
+CREATE VIEW most_popular_car AS 
+SELECT car_id, m.brand, m.model,c.state, COUNT(car_id) AS booking_times
+FROM Trips t  
+JOIN Cars c USING(car_id)
+JOIN Models m ON c.model=m.model_id
+GROUP BY car_id, m.brand
+ORDER BY booking_times DESC;
+
+-- get manager
+DROP PROCEDURE IF EXISTS get_manager;
+DELIMITER $$
+CREATE PROCEDURE get_manager(employee_id INT )
+BEGIN
+	SELECT e.employee_id, e.first_name, e.last_name, e.title,
+		m.first_name AS manager
+	FROM Employees e
+	LEFT JOIN Employees m ON e.manager = m.employee_id
+	WHERE e.employee_id=employee_id;
+END $$
+DELIMITER ;
+
+-- get best employee
+DROP PROCEDURE IF EXISTS get_best_employee;
+DELIMITER $$
+CREATE PROCEDURE get_best_employee()
+BEGIN
+	SELECT e.employee_id, e.first_name, e.last_name,
+		COUNT(employee_id) AS sales_by
+	FROM Employees e
+	JOIN Trips t USING(employee_id)
+	GROUP BY employee_id
+	ORDER BY sales_by DESC;
+END $$
+DELIMITER ;
