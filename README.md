@@ -170,14 +170,10 @@ INSERT INTO Payments VALUE(DEFAULT, "2023-03-03", 100, 8,9,3);
 
 </details>
 <details>
-  <summary>3. </summary>
-</details>
-<details>
-  <summary>4. </summary>
-</details>
-
-6.3 Use case for employees: 
+  <summary>3. Use case for employees</summary>
+	
 View best customers by the customer_rank view table.
+```
 CREATE VIEW customer_rank AS 
 SELECT c.customer_id, c.first_name, c.last_name,
 		SUM(amount) AS total_sales
@@ -187,9 +183,13 @@ GROUP BY customer_id
 ORDER BY SUM(amount) DESC;
 
 SELECT * FROM car_rental.customer_rank; 
+```
+![](https://github.com/JasmnC/PlusRental/blob/main/images/Screenshot19.png)
+
 
 View best car by the most_popular_car view table.
 
+```
 CREATE VIEW most_popular_car AS 
 SELECT car_id, m.brand, m.model,c.state, COUNT(car_id) AS booking_times
 FROM Trips t  
@@ -199,10 +199,13 @@ GROUP BY car_id, m.brand
 ORDER BY booking_times DESC;
 
 SELECT * FROM car_rental.most_popular_car;
- 
+``` 
+![](https://github.com/JasmnC/PlusRental/blob/main/images/Screenshot20.png)
+
 
 Also we’ll want to know each trip amount dues by the trip_amount_due view table.
 
+```
 CREATE VIEW trip_amount_due AS 
 SELECT t.trip_id, i.customer_id, i.invoice_id, t.total_price, i.paid_amount, 
 	t.total_price-i.paid_amount AS amount_due
@@ -212,21 +215,27 @@ GROUP BY trip_id
 ORDER BY (t.total_price-i.paid_amount) DESC;
 
 SELECT * FROM car_rental.trip_amount_due;
-
+```
+![](https://github.com/JasmnC/PlusRental/blob/main/images/Screenshot21.png)
  
+</details>
+<details>
+  <summary>4. Use case for business owners</summary>
 
-6.4 Use case for business owners
 View total sales by procedures.
-
+```
 DELIMITER $$
 CREATE PROCEDURE get_total_sales()
 BEGIN
 SELECT SUM(total_price) AS total_sales FROM trip_price;
 END$$
 DELIMITER ;
- 
+```
+![](https://github.com/JasmnC/PlusRental/blob/main/images/Screenshot22.png)
+
 
 View best employee by sorted procedures.
+```
 DROP PROCEDURE IF EXISTS get_best_employee;
 DELIMITER $$
 CREATE PROCEDURE get_best_employee()
@@ -239,11 +248,12 @@ GROUP BY employee_id
 ORDER BY sales_by DESC;
 END $$
 DELIMITER ;
+```
+![](https://github.com/JasmnC/PlusRental/blob/main/images/Screenshot23.png)
 
- 
 
 Also find his/her manager by sorted procedures, pass in employee id to as parameter. To avid not finding employee with NULL manager value, use left join.
-
+```
 DROP PROCEDURE IF EXISTS get_manager;
 DELIMITER $$
 CREATE PROCEDURE get_manager(employee_id INT )
@@ -255,6 +265,14 @@ LEFT JOIN Employees m ON e.manager = m.employee_id
 WHERE e.employee_id=employee_id;
 END $$
 DELIMITER ;
+```
+![](https://github.com/JasmnC/PlusRental/blob/main/images/Screenshot24.png)
+![](https://github.com/JasmnC/PlusRental/blob/main/images/Screenshot25.png)
+
+</details>
+
+
+
 
 
 
