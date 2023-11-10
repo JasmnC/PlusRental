@@ -3,7 +3,7 @@ This is a milestone project for database design and database management.
 
 ### Here I built a database pipeline for a pseudo car rental company called Plus Rental.
 
-**Built with:**	![](https://img.shields.io/badge/Code-MySQL-informational?style=flat&logo=Java&logoColor=white&color=FA8218)  ![](https://img.shields.io/badge/Tool-Workbench-informational?style=flat&logo=Java&logoColor=white&color=6082B6)  ![](https://img.shields.io/badge/Skill-DatabaseManagement-informational?style=flat&logo=Java&logoColor=white&color=90EE90)  
+**Built with:**	![](https://img.shields.io/badge/Code-MySQL-informational?style=flat&logoColor=white&color=FA8218)  ![](https://img.shields.io/badge/Tool-Workbench-informational?style=flat&logo=mysql&logoColor=white&color=6082B6)  ![](https://img.shields.io/badge/Skill-DatabaseManagement-informational?style=flat&logoColor=white&color=90EE90)  
 
 ### 1. Problem statement:
 -	I want to build a car rental system.
