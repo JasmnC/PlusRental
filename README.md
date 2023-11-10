@@ -29,17 +29,23 @@ For business owners:
 - Viewing best employees
 - Getting their manager by employee id
 
-3. The ER Diagram 
+3. The ER Diagram
+
+![](https://github.com/JasmnC/PlusRental/blob/main/images/ER_Diagram.png)
 
 
-4. The EER (After normalization) 
+4. The EER (After normalization)
+
+![](https://github.com/JasmnC/PlusRental/blob/main/images/EER_Diagram_3NF.png)
+
+
 5. The physical model made with MySQL workbench 
- 
+![](https://github.com/JasmnC/PlusRental/blob/main/images/Physical_Model.png) 
 
 6. Dummy data and Code review
+
 6.1 Dummy Data
 After I generate the sql script by forward engineering, defining structures, we can see all tables here but no data.
-
 
  
 
