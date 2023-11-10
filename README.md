@@ -3,7 +3,7 @@ This is a milestone project for database design and database management.
 
 Here I built a database pipeline for a pseudo car rental company called Plus Rental.
 
-1.Problem statement:
+### 1. Problem statement:
 -	I want to build a car rental system.
 -	Customers may have trips and make payments.
 -	Each trip is sales by employee.
@@ -12,7 +12,7 @@ Here I built a database pipeline for a pseudo car rental company called Plus Ren
 -	For drivers under 25, a young driver fee will be applied.
 
 
-2. Use cases:
+### 2. Use cases:
 Here's three main stakeholder in my systems, each of them have their specific use case based on their role.
 
 For customers:
@@ -29,20 +29,28 @@ For business owners:
 - Viewing best employees
 - Getting their manager by employee id
 
-3. The ER Diagram
+### 3. The ER Diagram
 
 ![](https://github.com/JasmnC/PlusRental/blob/main/images/ER_Diagram.png)
 
 
-4. The EER (After normalization)
+### 4. The EER (After normalization)
 
 ![](https://github.com/JasmnC/PlusRental/blob/main/images/EER_Diagram_3NF.png)
 
 
-5. The physical model made with MySQL workbench 
+### 5. The physical model made with MySQL workbench 
 ![](https://github.com/JasmnC/PlusRental/blob/main/images/Physical_Model.png) 
 
-6. Dummy data and Code review
+
+### 6. Dummy data and Code review
+
+<details>
+  <summary>1. Dummy Data</summary>
+  
+  After I generate the sql script by forward engineering, defining structures, we can see all tables here but no data.
+  
+</details>
 
 6.1 Dummy Data
 After I generate the sql script by forward engineering, defining structures, we can see all tables here but no data.
